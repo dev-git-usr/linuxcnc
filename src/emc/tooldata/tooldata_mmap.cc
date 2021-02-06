@@ -161,7 +161,10 @@ int tool_mmap_user()
 
     if (fd < 0) {
         perror("tool_mmap_user(): file open fail");
-        exit(EXIT_FAILURE);
+        fprintf(stderr,"tool_mmap_user no mmap file <%s>\n",
+                       TOOL_MMAP_FILENAME);
+        tool_mmap_base = (char*)0;
+        return(-1);
     }
     tool_mmap_base = (char*)mmap(0, TOOL_MMAP_SIZE, PROT_READ|PROT_WRITE,
                                  MAP_SHARED, fd, 0);
