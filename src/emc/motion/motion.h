@@ -683,8 +683,18 @@ Suggestion: Split this in to an Error and a Status flag register..
 	int external_offsets_applied;
 	EmcPose eoffset_pose;
 	int numExtraJoints;
+
+	EmcPose pause_carte_pos;	// initial pause point (ipp) - where we switched to the altQueue
+	EmcPose pause_offset_carte_pos;	// ipp + current offset values, set by update_offset_pose()
+	int current_request;    // one of enum pause_request
+
     } emcmot_status_t;
 
+    enum pause_request { REQ_NONE,
+			 REQ_STEP,
+			 REQ_RESUME,
+			 REQ_PAUSE
+    };
 /*********************************
         CONFIG STRUCTURE
 *********************************/
