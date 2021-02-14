@@ -750,6 +750,13 @@ Suggestion: Split this in to an Error and a Status flag register..
 				   approx line 50 */
 
 	double limitVel;	/* scalar upper limit on vel */
+	
+	KINEMATICS_TYPE kinematics_type;
+	vtkins_t *vtk;          // pointer to kinematics vtable
+	vtp_t    *vtp;          // pointer to tp vtable
+	int kins_vid;           // HAL id of kins vtable
+	int tp_vid;             // HAL id of tp vtable
+
 	int debug;		/* copy of DEBUG, from .ini file */
 	unsigned char tail;	/* flag count for mutex detect */
         int arcBlendOptDepth;
