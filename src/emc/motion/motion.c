@@ -430,6 +430,42 @@ static int init_hal_io(void)
     if ((retval = hal_pin_float_newf(HAL_OUT, &(emcmot_hal_data->tooloffset_v), mot_comp_id, "motion.tooloffset.v")) != 0) goto error;
     if ((retval = hal_pin_float_newf(HAL_OUT, &(emcmot_hal_data->tooloffset_w), mot_comp_id, "motion.tooloffset.w")) != 0) goto error;
 
+// feedhold-offset related pins
+    if ((retval = hal_pin_bit_newf(HAL_IN, &(emcmot_hal_data->pause_offset_enable),
+				   mot_comp_id, "motion.pause-offset-enable")) < 0) return retval;
+
+    if ((retval = hal_pin_s32_newf(HAL_OUT, &(emcmot_hal_data->paused_at_motion_type),
+				   mot_comp_id, "motion.paused-at-motion")) < 0) return retval;
+
+    if ((retval = hal_pin_s32_newf(HAL_OUT, &(emcmot_hal_data->current_motion_type),
+				   mot_comp_id, "motion.current-motion")) < 0) return retval;
+
+    if ((retval = hal_pin_bit_newf(HAL_OUT, &(emcmot_hal_data->pause_offset_in_range),
+				   mot_comp_id, "motion.pause-offset-in-range")) < 0) return retval;
+
+
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_jog_vel),
+				     mot_comp_id, "motion.pause-jog-feed")) < 0) return retval;
+
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_x),
+				     mot_comp_id, "motion.pause-offset-x")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_y),
+				     mot_comp_id, "motion.pause-offset-y")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_z),
+				     mot_comp_id, "motion.pause-offset-z")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_a),
+				     mot_comp_id, "motion.pause-offset-a")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_b),
+				     mot_comp_id, "motion.pause-offset-b")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_c),
+				     mot_comp_id, "motion.pause-offset-c")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_u),
+				     mot_comp_id, "motion.pause-offset-u")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_v),
+				     mot_comp_id, "motion.pause-offset-v")) < 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_IN, &(emcmot_hal_data->pause_offset_w),
+				     mot_comp_id, "motion.pause-offset-w")) < 0) return retval;
+					 
     /* initialize machine wide pins and parameters */
     *(emcmot_hal_data->adaptive_feed) = 1.0;
     *(emcmot_hal_data->feed_hold) = 0;
