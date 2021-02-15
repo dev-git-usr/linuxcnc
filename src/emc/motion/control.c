@@ -272,6 +272,8 @@ void emcmotController(void *arg, long period)
    at the top of the file in the section called "local function
    prototypes"
 */
+extern int inRange(EmcPose pos, int id, char *move_type); // from command.c
+
 static void update_offset_pose(void)
 {
     EmcPose *nt = &emcmotStatus->pause_offset_carte_pos;
@@ -469,6 +471,8 @@ static void process_inputs(void)
 	    *emcmot_hal_data->pause_state = PS_RETURNING;
 	    break;
 	}
+
+    
 
 	update_offset_pose();
 	*emcmot_hal_data->pause_offset_in_range = inRange(emcmotStatus->pause_offset_carte_pos, 0, NULL);
