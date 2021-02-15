@@ -662,6 +662,8 @@ Suggestion: Split this in to an Error and a Status flag register..
 	int activeDepth;	/* depth of active blend elements */
 	int queueFull;		/* Flag to indicate the tc queue is full */
 	int paused;		/* Flag to signal motion paused */
+	int pause_state;	/* state of the motion pause FSM */
+	int resuming;	        /* resume operation in progress */	
 	int overrideLimitMask;	/* non-zero means one or more limits ignored */
 				/* 1 << (joint-num*2) = ignore neg limit */
 				/* 2 << (joint-num*2) = ignore pos limit */
