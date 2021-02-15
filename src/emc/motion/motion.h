@@ -78,6 +78,7 @@ to another.
 #include "kinematics.h"
 #include "simple_tp.h"
 #include "rtapi_limits.h"
+#include "tp.h"
 #include <stdarg.h>
 #include "rtapi_bool.h"
 #include "state_tag.h"
@@ -750,7 +751,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 				   approx line 50 */
 
 	double limitVel;	/* scalar upper limit on vel */
-	
+
 	KINEMATICS_TYPE kinematics_type;
 	vtkins_t *vtk;          // pointer to kinematics vtable
 	vtp_t    *vtp;          // pointer to tp vtable
