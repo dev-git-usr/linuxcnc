@@ -16,7 +16,7 @@
 #define KINEMATICS_H
 
 #include "emcpos.h"		/* EmcPose */
-
+#include "vtable.h"     // vtable signatures
 /*
   The type of kinematics used.
   
@@ -115,5 +115,31 @@ extern int map_coordinates_to_jnumbers(char *coordinates,
                                        int  max_joints,
                                        int  allow_duplicates,
                                        int  axis_idx_for_jno[]);
+
+//used for Jog-while-paused
+
+typedef int (*vtk_kinematicsForward_t)(const double *joint,
+				     struct EmcPose * world,
+				     const KINEMATICS_FORWARD_FLAGS * fflags,
+				     KINEMATICS_INVERSE_FLAGS * iflags);
+typedef int (*vtk_kinematicsInverse_t)(const struct EmcPose * world,
+				     double *joint,
+				     const KINEMATICS_INVERSE_FLAGS * iflags,
+				     KINEMATICS_FORWARD_FLAGS * fflags);
+
+typedef int (* vtk_kinematicsHome_t)(struct EmcPose * world,
+				   double *joint,
+				   KINEMATICS_FORWARD_FLAGS * fflags,
+				   KINEMATICS_INVERSE_FLAGS * iflags);
+
+
+typedef KINEMATICS_TYPE  (*vtk_kinematicsType_t)(void);
+
+typedef struct {
+    vtk_kinematicsForward_t kinematicsForward;
+    vtk_kinematicsInverse_t kinematicsInverse;
+    //    vtk_kinematicsHome_t    kinematicsHome; // unused
+    vtk_kinematicsType_t    kinematicsType;
+} vtkins_t;
 
 #endif
