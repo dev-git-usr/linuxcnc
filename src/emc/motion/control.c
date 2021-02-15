@@ -272,6 +272,18 @@ void emcmotController(void *arg, long period)
    at the top of the file in the section called "local function
    prototypes"
 */
+
+#define EQUAL_EMC_POSE(p1,p2) \
+    (((p1).tran.x == (p2).tran.x) && \
+     ((p1).tran.y == (p2).tran.y) && \
+     ((p1).tran.z == (p2).tran.z) && \
+     ((p1).a == (p2).a) &&		 \
+     ((p1).b == (p2).b) &&		 \
+     ((p1).c == (p2).c) &&		 \
+     ((p1).u == (p2).u) &&		 \
+     ((p1).v == (p2).v) &&		 \
+     ((p1).w == (p2).w))
+     
 extern int inRange(EmcPose pos, int id, char *move_type); // from command.c
 
 static void update_offset_pose(void)
