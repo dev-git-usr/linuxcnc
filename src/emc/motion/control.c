@@ -36,6 +36,8 @@ static double ext_offset_epsilon;
 KINEMATICS_FORWARD_FLAGS fflags = 0;
 KINEMATICS_INVERSE_FLAGS iflags = 0;
 
+extern int abort_and_switchback(void); // command.c
+
 /* 1/servo cycle time */
 double servo_freq;
 
