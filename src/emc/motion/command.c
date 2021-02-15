@@ -562,10 +562,15 @@ void emcmotCommandHandler(void *arg, long period)
 	    rtapi_print_msg(RTAPI_MSG_DBG, "ABORT");
 	    rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
 	    /* check for coord or free space motion active */
-	  	if (GET_MOTION_TELEOP_FLAG()) {
-            ZERO_EMC_POSE(emcmotDebug->teleop_data.desiredVel);
+	    if (GET_MOTION_TELEOP_FLAG()) {
+		for (axis_num = 0; axis_num < EMCMOT_MAX_AXIS; axis_num++) {
+		    /* point to joint struct */
+		    axis = &axes[axis_num];
+		    /* tell teleop planner to stop */
+		    axis->teleop_tp.enable = 0;
+                }
 	    } else if (GET_MOTION_COORD_FLAG()) {
-		abort_and_switchback();
+		tpAbort(&emcmotDebug->coord_tp);
 	    } else {
 		for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
 		    /* point to joint struct */
@@ -573,13 +578,13 @@ void emcmotCommandHandler(void *arg, long period)
 		    /* tell joint planner to stop */
 		    joint->free_tp.enable = 0;
 		    /* stop homing if in progress */
-		    if ( joint->home_state != HOME_IDLE ) {
-			joint->home_state = HOME_ABORT;
+		    if ( ! get_home_is_idle(joint_num)) {
+			set_home_abort(joint_num);
 		    }
 		}
 	    }
             SET_MOTION_ERROR_FLAG(0);
-	    /* clear joint errors (regardless of mode */	    
+	    /* clear joint errors (regardless of mode) */
 	    for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
 		/* point to joint struct */
 		joint = &joints[joint_num];
@@ -587,9 +592,9 @@ void emcmotCommandHandler(void *arg, long period)
 		SET_JOINT_ERROR_FLAG(joint, 0);
 		SET_JOINT_FAULT_FLAG(joint, 0);
 	    }
-	    emcmotStatus->pause_state =  *(emcmot_hal_data->pause_state) = PS_RUNNING;
-	    emcmotStatus->resuming = 0;
-
+	    emcmotStatus->paused = 0;
+		emcmotStatus->pause_state =  *(emcmot_hal_data->pause_state) = PS_RUNNING;
+		emcmotStatus->resuming = 0;
 	    break;
 
 	case EMCMOT_JOINT_ABORT:
