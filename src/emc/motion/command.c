@@ -567,11 +567,11 @@ void emcmotCommandHandler(void *arg, long period)
 	    } else if (GET_MOTION_COORD_FLAG()) {
 		abort_and_switchback();
 	    } else {
-		for (joint_num = 0; joint_num < num_joints; joint_num++) {
+		for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
 		    /* point to joint struct */
 		    joint = &joints[joint_num];
 		    /* tell joint planner to stop */
-		    joint->free_tp_enable = 0;
+		    joint->free_t._enable = 0;
 		    /* stop homing if in progress */
 		    if ( joint->home_state != HOME_IDLE ) {
 			joint->home_state = HOME_ABORT;
@@ -580,7 +580,7 @@ void emcmotCommandHandler(void *arg, long period)
 	    }
             SET_MOTION_ERROR_FLAG(0);
 	    /* clear joint errors (regardless of mode */	    
-	    for (joint_num = 0; joint_num < num_joints; joint_num++) {
+	    for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
 		/* point to joint struct */
 		joint = &joints[joint_num];
 		/* update status flags */
