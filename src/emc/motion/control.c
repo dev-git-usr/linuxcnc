@@ -45,6 +45,8 @@ double servo_freq;
    JOINT_FLAG and MOTION_FLAG */
 // #define WATCH_FLAGS 1
 
+// ignore jog moves during pause if feed too low
+#define MINIMUM_JOG_VELOCITY 0.1 // FIXME: questionable
 
 /***********************************************************************
 *                  LOCAL VARIABLE DECLARATIONS                         *
@@ -283,7 +285,7 @@ void emcmotController(void *arg, long period)
      ((p1).u == (p2).u) &&		 \
      ((p1).v == (p2).v) &&		 \
      ((p1).w == (p2).w))
-     
+
 extern int inRange(EmcPose pos, int id, char *move_type); // from command.c
 
 static void update_offset_pose(void)
