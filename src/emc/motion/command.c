@@ -571,7 +571,7 @@ void emcmotCommandHandler(void *arg, long period)
 		    /* point to joint struct */
 		    joint = &joints[joint_num];
 		    /* tell joint planner to stop */
-		    joint->free_t._enable = 0;
+		    joint->free_tp._enable = 0;
 		    /* stop homing if in progress */
 		    if ( joint->home_state != HOME_IDLE ) {
 			joint->home_state = HOME_ABORT;
