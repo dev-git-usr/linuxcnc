@@ -223,7 +223,7 @@ static int check_axis_constraint(double target, int id, char *move_type,
 /* inRange() returns non-zero if the position lies within the joint
    limits, or 0 if not.  It also reports an error for each joint limit
    violation.  It's possible to get more than one violation per move. */
-STATIC int inRange(EmcPose pos, int id, char *move_type)
+int inRange(EmcPose pos, int id, char *move_type)
 {
     double joint_pos[EMCMOT_MAX_JOINTS];
     int joint_num;
