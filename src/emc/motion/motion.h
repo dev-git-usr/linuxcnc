@@ -78,6 +78,7 @@ to another.
 #include "kinematics.h"
 #include "simple_tp.h"
 #include "rtapi_limits.h"
+#include "motion_id.h"
 #include "tp.h"
 #include <stdarg.h>
 #include "rtapi_bool.h"
