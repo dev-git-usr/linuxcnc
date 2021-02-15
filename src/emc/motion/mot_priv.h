@@ -294,6 +294,9 @@ extern struct emcmot_config_t *emcmotConfig;
 extern struct emcmot_debug_t *emcmotDebug;
 extern struct emcmot_error_t *emcmotError;
 
+extern TP_STRUCT *emcmotPrimQueue;
+extern TP_STRUCT *emcmotAltQueue;
+extern TP_STRUCT *emcmotQueue;
 
 // total number of joints (typically set with [KINS]JOINTS)
 #define ALL_JOINTS emcmotConfig->numJoints
