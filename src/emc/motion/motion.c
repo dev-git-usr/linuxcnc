@@ -101,6 +101,12 @@ struct emcmot_config_t *emcmotConfig = 0;
 struct emcmot_debug_t *emcmotDebug = 0;
 struct emcmot_error_t *emcmotError = 0;	/* unused for RT_FIFO */
 
+TP_STRUCT *emcmotPrimQueue = 0; // primary planner + queues
+TP_STRUCT *emcmotAltQueue = 0; // alternate planner + queues
+
+// emcmotQueue: this was formerly &emcmotDebug->queue
+TP_STRUCT *emcmotQueue = 0;     // current planner queue
+
 /***********************************************************************
 *                  LOCAL VARIABLE DECLARATIONS                         *
 ************************************************************************/
