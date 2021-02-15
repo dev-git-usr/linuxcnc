@@ -50,6 +50,7 @@ typedef struct emcmot_debug_t {
 
 	TP_STRUCT coord_tp;	/* coordinated mode planner */
 
+	EMC_TELEOP_DATA teleop_data;
 /* space for trajectory planner queues, plus 10 more for safety */
 /*! \todo FIXME-- default is used; dynamic is not honored */
 	TC_STRUCT queueTcSpace[DEFAULT_TC_QUEUE_SIZE + 10];
