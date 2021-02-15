@@ -67,4 +67,48 @@ int tpSetDout(TP_STRUCT * const tp, int index, unsigned char start, unsigned cha
 int tpSetRunDir(TP_STRUCT * const tp, tc_direction_t dir);
 int tpIsMoving(TP_STRUCT const * const tp);
 
+// for jog-while-paused:
+typedef int (*tpIsPaused_t)(TP_STRUCT * tp);
+typedef int (*tpSnapshot_t)(TP_STRUCT * from, TP_STRUCT * to);
+
+
+// the tp API vtable
+typedef struct {
+    tpCreate_t          tpCreate;
+    tpClear_t           tpClear;
+    tpInit_t            tpInit;
+    tpClearDIOs_t	tpClearDIOs;
+    tpSetCycleTime_t    tpSetCycleTime;
+    tpSetVmax_t	        tpSetVmax;
+    tpSetVlimit_t	tpSetVlimit;
+    tpSetAmax_t		tpSetAmax;
+    tpSetId_t	        tpSetId;
+    tpGetExecId_t	tpGetExecId;
+    tpGetExecTag_t      tpGetExecTag;
+    tpSetTermCond_t	tpSetTermCond;
+    tpSetPos_t          tpSetPos;
+    tpAddCurrentPos_t   tpAddCurrentPos;
+    tpSetCurrentPos_t   tpSetCurrentPos;
+    tpAddRigidTap_t	tpAddRigidTap;
+    tpAddLine_t	        tpAddLine;
+    tpAddCircle_t	tpAddCircle;
+    tpRunCycle_t	tpRunCycle;
+    tpPause_t	        tpPause;
+    tpResume_t	        tpResume;
+    tpAbort_t	        tpAbort;
+    tpGetPos_t          tpGetPos;
+    tpIsDone_t          tpIsDone;
+    tpQueueDepth_t	tpQueueDepth;
+    tpActiveDepth_t	tpActiveDepth;
+    tpGetMotionType_t   tpGetMotionType;
+    tpSetSpindleSync_t  tpSetSpindleSync;
+    tpToggleDIOs_t	tpToggleDIOs;
+    tpSetAout_t	        tpSetAout;
+    tpSetDout_t	        tpSetDout;
+    tpIsPaused_t	tpIsPaused;
+    tpSnapshot_t	tpSnapshot;
+    tcqFull_t           tcqFull;
+} vtp_t;
+
+
 #endif				/* TP_H */
