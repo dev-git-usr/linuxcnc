@@ -1294,8 +1294,10 @@ void emcmotCommandHandler(void *arg, long period)
 	    /* can happen at any time */
 	    rtapi_print_msg(RTAPI_MSG_DBG, "PAUSE");
 	    tpPause(&emcmotDebug->coord_tp);
-	    emcmotStatus->paused = 1;
+		// trigger pause FSM
 		*(emcmot_hal_data->pause_state) = PS_PAUSING;
+		emcmotStatus->resuming = 0;
+	    emcmotDebug->stepping = 0;
 	    break;
 
 	case EMCMOT_REVERSE:
@@ -1316,23 +1318,31 @@ void emcmotCommandHandler(void *arg, long period)
 	    /* resume paused motion */
 	    /* can happen at any time */
 	    rtapi_print_msg(RTAPI_MSG_DBG, "RESUME");
-	    emcmotDebug->stepping = 0;
-	    tpResume(&emcmotDebug->coord_tp);
-	    emcmotStatus->paused = 0;
+		// just signal pause fsm since a return move might be needed
+	    emcmotStatus->resuming = 1;
 	    break;
 
 	case EMCMOT_STEP:
 	    /* resume paused motion until id changes */
 	    /* can happen at any time */
             rtapi_print_msg(RTAPI_MSG_DBG, "STEP");
-            if(emcmotStatus->paused) {
-                emcmotDebug->idForStep = emcmotStatus->id;
-                emcmotDebug->stepping = 1;
-                tpResume(&emcmotDebug->coord_tp);
-                emcmotStatus->paused = 1;
-            } else {
-		reportError(_("MOTION: can't STEP while already executing"));
-	    }
+            switch (*emcmot_hal_data->pause_state){
+				case PS_JOGGING:
+					reportError(_("MOTION: can't STEP while jogging"));
+					break;
+				case PS_RETURNING:
+					reportError(_("MOTION: can't STEP while in return move"));
+					break;
+				case PS_PAUSED:
+				case PS_PAUSED_IN_OFFSET:
+					emcmotDebug->idForStep = emcmotStatus->id;
+					emcmotDebug->stepping = 1;
+					//tpResume(&emcmotDebug->coord_tp);
+					//emcmotStatus->paused = 1;
+				break;
+				default:
+					reportError(_("MOTION: STEP while in state %d"),*emcmot_hal_data->pause_state);  // improve this FIXME
+	    	}
 	    break;
 
 	case EMCMOT_FEED_SCALE:
