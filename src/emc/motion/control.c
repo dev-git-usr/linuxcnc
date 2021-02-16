@@ -306,7 +306,7 @@ static void update_offset_pose(void)
 
 static void process_inputs(void)
 {
-    printf("Processing Inputs");
+    printf("Processing Inputs\n");
     int joint_num, spindle_num;
     double abs_ferror, scale;
     joint_hal_t *joint_data;
@@ -390,11 +390,11 @@ static void process_inputs(void)
     case PS_PAUSING_FOR_STEP:
 	rtapi_print_msg(RTAPI_MSG_DBG, "paused for step\n");
 	emcmotConfig->vtp->tpPause(emcmotQueue);
-	*emcmot_hal_data->pause_state = PS_PAUSING;;
+	*emcmot_hal_data->pause_state = PS_PAUSING;
 	break;
 
     case PS_PAUSING:
-    printf("Proccessing PS_PAUSING in control.c");
+    printf("Proccessing PS_PAUSING in control.c\n");
 	// waiting for tp to actually stop since a spindle-sync motion might be in progress
 	if (emcmotConfig->vtp->tpIsPaused(emcmotQueue)) {
 	    rtapi_print_msg(RTAPI_MSG_DBG, "stopped\n");
