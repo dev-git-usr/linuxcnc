@@ -402,8 +402,7 @@ static void process_inputs(void)
 	    // switch to alternate motion queue:
 
 	    // record type of paused motion
-	    *emcmot_hal_data->paused_at_motion_type =
-		emcmotConfig->vtp->tpGetMotionType(emcmotQueue);
+	    *emcmot_hal_data->paused_at_motion_type = emcmotConfig->vtp->tpGetMotionType(emcmotQueue);
         printf("Point1\n");
 	    // record current carte pos for return move
 	    emcmotConfig->vtp->tpGetPos(emcmotQueue, &emcmotStatus->pause_carte_pos);
@@ -424,6 +423,7 @@ static void process_inputs(void)
 	    // at this point, ready to run motions on alternate queue
 	    *emcmot_hal_data->pause_state = PS_PAUSED;
 	}
+    printf("finished PS_PAUSING\n");
 	break;
 
     case PS_PAUSED:
