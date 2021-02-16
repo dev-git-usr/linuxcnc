@@ -569,7 +569,7 @@ static void process_inputs(void)
 	}
 	break;
     }
-    
+    printf("finished-Switchcase\n");
     /* save the resulting combined scale factor */
     emcmotStatus->net_feed_scale = scale;
 
