@@ -1295,6 +1295,7 @@ void emcmotCommandHandler(void *arg, long period)
 	    rtapi_print_msg(RTAPI_MSG_DBG, "PAUSE");
 	    tpPause(&emcmotDebug->coord_tp);
 	    emcmotStatus->paused = 1;
+		*(emcmot_hal_data->pause_state) = PS_PAUSING;
 	    break;
 
 	case EMCMOT_REVERSE:
