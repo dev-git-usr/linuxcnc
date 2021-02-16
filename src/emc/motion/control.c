@@ -379,7 +379,7 @@ static void process_inputs(void)
 	}
 
         // pause FSM
-    rtapi_print_msg(RTAPI_MSG_DBG, *emcmot_hal_data->pause_state);
+    rtapi_print_msg(RTAPI_MSG_DBG, "TEST");
 
     switch (*emcmot_hal_data->pause_state) {
 
