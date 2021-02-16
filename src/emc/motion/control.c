@@ -306,6 +306,7 @@ static void update_offset_pose(void)
 
 static void process_inputs(void)
 {
+    printf("Processing Inputs");
     int joint_num, spindle_num;
     double abs_ferror, scale;
     joint_hal_t *joint_data;
