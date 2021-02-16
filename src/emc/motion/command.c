@@ -1298,7 +1298,7 @@ void emcmotCommandHandler(void *arg, long period)
 		*(emcmot_hal_data->pause_state) = PS_PAUSING;
 		emcmotStatus->resuming = 0;
 	    emcmotDebug->stepping = 0;
-		printf("Processed EMCMOT_PAUSE in command.c");
+		printf("Processed EMCMOT_PAUSE in command.c\n");
 	    break;
 
 	case EMCMOT_REVERSE:

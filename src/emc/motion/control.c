@@ -396,19 +396,19 @@ static void process_inputs(void)
 	// waiting for tp to actually stop since a spindle-sync motion might be in progress
 	if (emcmotConfig->vtp->tpIsPaused(emcmotQueue)) {
 	    rtapi_print_msg(RTAPI_MSG_DBG, "stopped\n");
-
+        printf("stopped\n");
 	    // switch to alternate motion queue:
 
 	    // record type of paused motion
 	    *emcmot_hal_data->paused_at_motion_type =
 		emcmotConfig->vtp->tpGetMotionType(emcmotQueue);
-
+        printf("Point1\n");
 	    // record current carte pos for return move
 	    emcmotConfig->vtp->tpGetPos(emcmotQueue, &emcmotStatus->pause_carte_pos);
 
 	    // clone parameters from primary queue
 	    emcmotConfig->vtp->tpSnapshot(emcmotPrimQueue, emcmotAltQueue);
-
+        printf("Point2\n");
 	    // side effect: this also clears emcmotStatus fields
 	    // current_vel, requested_vel, spindleSync, distance_to_go
 	    emcmotConfig->vtp->tpClear(emcmotAltQueue);
