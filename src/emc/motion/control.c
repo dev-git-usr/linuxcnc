@@ -379,7 +379,7 @@ static void process_inputs(void)
 	}
 
         // pause FSM
-    printf( "TEST");
+    printf( "Pause-State = %i \n", *emcmot_hal_data->pause_state);
 
     switch (*emcmot_hal_data->pause_state) {
 
