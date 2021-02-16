@@ -692,6 +692,7 @@ static void process_inputs(void)
 			}
 		}
     }
+    printf("Finished  process Inputs\n");
 }
 
 static void do_forward_kins(void)
