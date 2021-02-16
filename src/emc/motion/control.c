@@ -393,6 +393,7 @@ static void process_inputs(void)
 	break;
 
     case PS_PAUSING:
+    printf("Proccessing PS_PAUSING in control.c");
 	// waiting for tp to actually stop since a spindle-sync motion might be in progress
 	if (emcmotConfig->vtp->tpIsPaused(emcmotQueue)) {
 	    rtapi_print_msg(RTAPI_MSG_DBG, "stopped\n");
