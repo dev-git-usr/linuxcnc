@@ -93,6 +93,7 @@ static inline hal_bit_t get_stepping(tp_shared_t *ts)
 
 static inline hal_float_t get_current_vel(tp_shared_t *ts)
 { return *(ts->current_vel); }
+
 static inline void set_current_vel(tp_shared_t *ts, hal_float_t n)
 { *(ts->current_vel) = n; }
 
