@@ -143,7 +143,7 @@ static inline hal_float_t get_arcBlendTangentKinkRatio(tp_shared_t *ts)
 { 
     const double max_ratio = 0.7071;
     const double min_ratio = 0.001;
-    return rtapi_fmax(rtapi_fmin(*(ts->arcBlendTangentKinkRatio), max_ratio), min_ratio);
+    return fmax(fmin(*(ts->arcBlendTangentKinkRatio), max_ratio), min_ratio);
 }
 
 static inline void dioWrite(tp_shared_t *ts, unsigned int index, char value)
