@@ -380,7 +380,7 @@ static void process_inputs(void)
 	}
 
         // pause FSM
-    printf( "Pause-State = %i \n", *emcmot_hal_data->pause_state);
+    //printf( "Pause-State = %i \n", *emcmot_hal_data->pause_state);
 
     switch (*emcmot_hal_data->pause_state) {
 
@@ -569,7 +569,7 @@ static void process_inputs(void)
 	}
 	break;
     }
-    printf("finished-Switchcase\n");
+    //printf("finished-Switchcase\n");
     /* save the resulting combined scale factor */
     emcmotStatus->net_feed_scale = scale;
 
@@ -692,7 +692,7 @@ static void process_inputs(void)
 			}
 		}
     }
-    printf("Finished  process Inputs\n");
+    //printf("Finished  process Inputs\n");
 }
 
 static void do_forward_kins(void)

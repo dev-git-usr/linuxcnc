@@ -3565,7 +3565,7 @@ int tpIsMoving(TP_STRUCT const * const tp)
 // needed since a synchronized motion in progress will not be paused
 int tpIsPaused(TP_STRUCT * tp)
 {
-    printf("running tpIsPaused\n");
+    //printf("running tpIsPaused\n");
     TC_STRUCT *tc;
 
     if (0 == tp) { // I assume this would be a fatal error?
