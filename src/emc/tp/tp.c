@@ -14,7 +14,6 @@
 #include "posemath.h"           /* Geometry types & functions */
 #include "tc.h"
 #include "tp.h"
-#include "tp_private.h"
 #include "tp_shared.h"
 #include "emcpose.h"
 #include "rtapi_math.h"

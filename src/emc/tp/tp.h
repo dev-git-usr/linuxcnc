@@ -119,6 +119,10 @@ int tpIsMoving(TP_STRUCT const * const tp);
 typedef int (*tpIsPaused_t)(TP_STRUCT * tp);
 typedef int (*tpSnapshot_t)(TP_STRUCT * from, TP_STRUCT * to);
 
+// for jog-while-paused:
+int tpIsPaused(TP_STRUCT * tp);
+
+int tpSnapshot(TP_STRUCT * from, TP_STRUCT * to);
 
 // the tp API vtable
 typedef struct {
