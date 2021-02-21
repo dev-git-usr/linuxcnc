@@ -819,7 +819,7 @@ int main (int argc,char **argv)
 				return 1;
 			}
 
-			dev_handle = libusb_open_device_with_vid_pid(ctx, 0x10CE, 0xEB70);
+			dev_handle = libusb_open_device_with_vid_pid(ctx, 0x10CE, 0xEB93);
 			libusb_free_device_list(devs, 1);
 			if (dev_handle == NULL) {
 				if (wait_for_pendant_before_HAL) {
