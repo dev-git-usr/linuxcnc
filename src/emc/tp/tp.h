@@ -159,7 +159,7 @@ typedef struct {
     tpSetDout_t	        tpSetDout;
     tpIsPaused_t	tpIsPaused;
     tpSnapshot_t	tpSnapshot;
-    tcqFull_t           tcqFull;
+    //tcqFull_t           tcqFull;
 } vtp_t;
 
 
