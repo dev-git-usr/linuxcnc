@@ -396,7 +396,7 @@ static void process_inputs(void)
 
     case PS_PAUSING:
     printf("Proccessing PS_PAUSING in control.c\n");
-    if(emcmotConfig->vtp == null) {
+    if(emcmotConfig->vtp == NULL) {
         rtapi_print_msg(RTAPI_MSG_DBG, "Pausing- Error - vtp is nulll");
     }
 	// waiting for tp to actually stop since a spindle-sync motion might be in progress
