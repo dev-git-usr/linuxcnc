@@ -306,6 +306,7 @@ static void update_offset_pose(void)
 
 static void process_inputs(void)
 {
+    rtapi_set_msg_level(RTAPI_MSG_DBG);
     //printf("Processing Inputs\n");
     int joint_num, spindle_num;
     double abs_ferror, scale;
