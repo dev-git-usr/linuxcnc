@@ -3577,8 +3577,8 @@ int tpIsPaused(TP_STRUCT * tp)
         rtapi_print_msg(RTAPI_MSG_DBG, " tpIsPaused(): motion queue empty\n");
         return tp->pausing;
     }
-    rtapi_print_msg(RTAPI_MSG_DBG, " tpIsPaused(): pausing=%d synced=%d velmode=%d\n",
-                    tp->pausing, tc->synchronized, tc->velocity_mode);
+    //rtapi_print_msg(RTAPI_MSG_DBG, " tpIsPaused(): pausing=%d synced=%d velmode=%d\n",
+    //                tp->pausing, tc->synchronized, tc->velocity_mode);
 
     //If the machine is still moving, then it's not actually paused yet
     if ( get_current_vel(tp->shared) > TP_VEL_EPSILON) {
