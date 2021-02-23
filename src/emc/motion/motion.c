@@ -84,6 +84,9 @@ emcmot_joint_t *joints = 0;
 /* pointer to axis data */
 emcmot_axis_t *axes = 0;
 
+//JWP
+int kinType = 0;
+
 #ifndef STRUCTS_IN_SHMEM
 /* allocate array for joint data */
 emcmot_joint_t joint_array[EMCMOT_MAX_JOINTS];
