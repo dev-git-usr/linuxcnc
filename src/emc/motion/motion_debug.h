@@ -56,6 +56,12 @@ typedef struct emcmot_debug_t {
 /*! \todo FIXME-- default is used; dynamic is not honored */
 	TC_STRUCT queueTcSpace[DEFAULT_TC_QUEUE_SIZE + 10];
 
+//JWP start
+	TP_STRUCT altqueue;	/* coordinated mode planner */
+	TC_STRUCT altqueueTcSpace[DEFAULT_ALT_TC_QUEUE_SIZE + 10];
+
+//JWP end
+
 	int enabling;		/* starts up disabled */
 	int coordinating;	/* starts up in free mode */
 	int teleoperating;	/* starts up in free mode */

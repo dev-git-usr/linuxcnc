@@ -819,7 +819,7 @@ static int init_comm_buffers(void)
 
     emcmotDebug = &emcmotStruct->debug;
 
-    emcmotPrimQueue = &emcmotStruct->debug.tp;     // primary motion queue
+    emcmotPrimQueue = &emcmotStruct->debug.coord_tp;     // primary motion queue
     emcmotAltQueue = &emcmotStruct->debug.altqueue;   // alternate motion queue
 
     // emcmotQueue: this was formerly &emcmotDebug->queue
