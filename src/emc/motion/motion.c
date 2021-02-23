@@ -779,6 +779,40 @@ static int init_comm_buffers(void)
     emcmotDebug = &emcmotStruct->debug;
     emcmotError = &emcmotStruct->error;
 
+    //JWP start
+    // bind kinematics vtable
+    emcmotConfig->kins_vid = hal_reference_vtable(kins, VTKINS_VERSION,
+						  (void **)&emcmotConfig->vtk);
+    if (emcmotConfig->kins_vid < 0) {
+	rtapi_print_msg(RTAPI_MSG_ERR,
+			"MOTION: hal_reference_vtable(%s,%d) failed: %d\n",
+			kins, VTKINS_VERSION, emcmotConfig->kins_vid);
+	return -1;
+    }
+
+    /* record the kinematics type of the machine */
+    kinType = emcmotConfig->vtk->kinematicsType();
+
+    // bind the tp vtable
+    emcmotConfig->tp_vid = hal_reference_vtable(tp, VTP_VERSION,
+						(void **)&emcmotConfig->vtp);
+    if (emcmotConfig->tp_vid < 0) {
+	rtapi_print_msg(RTAPI_MSG_ERR,
+			"MOTION: hal_reference_vtable(%s,%d) failed: %d\n",
+			tp, VTP_VERSION, emcmotConfig->tp_vid);
+	return -1;
+    }
+
+
+    emcmotDebug = &emcmotStruct->debug;
+
+    emcmotPrimQueue = &emcmotStruct->debug.tp;     // primary motion queue
+    emcmotAltQueue = &emcmotStruct->debug.altqueue;   // alternate motion queue
+
+    // emcmotQueue: this was formerly &emcmotDebug->queue
+    emcmotQueue = emcmotPrimQueue;   // start on primary motion queue
+    //JWP end
+
     /* init error struct */
     emcmotErrorInit(emcmotError);
 
