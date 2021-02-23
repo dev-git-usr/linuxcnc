@@ -21,6 +21,12 @@
 #include "rtapi_math.h"
 #include "homing.h"
 
+//JWP start
+// vtable signatures
+#define VTKINS_VERSION VTKINEMATICS_VERSION1
+#define VTP_VERSION    VTTP_VERSION1
+//JWP end
+
 // Mark strings for translation, but defer translation to userspace
 #define _(s) (s)
 
