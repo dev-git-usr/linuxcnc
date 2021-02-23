@@ -450,7 +450,15 @@ hal_vtable_t *halpr_find_vtable_by_id(int vtable_id);
 */
 extern hal_port_t hal_port_alloc(unsigned size);
 
-
+// automatically release the local hal_data->mutex on scope exit.
+// if a local variable is declared like so:
+//
+// int foo  __attribute__((cleanup(halpr_autorelease_mutex)));
+//
+// then leaving foo's scope will cause halpr_release_lock() to be called
+// see http://git.mah.priv.at/gitweb?p=emc2-dev.git;a=shortlog;h=refs/heads/hal-lock-unlock
+// NB: make sure the mutex is actually held in the using code when leaving scope!
+void halpr_autorelease_mutex(void *variable);
 
 #define HAL_STREAM_MAGIC_NUM		0x4649464F
 struct hal_stream_shm {
