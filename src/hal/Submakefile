@@ -3,7 +3,8 @@ INCLUDES += hal
 ../include/%.h: ./hal/%.h
 	cp $^ $@
 
-HALLIBSRCS := hal/hal_lib.c $(ULAPISRCS)
+HALLIBSRCS := hal/hal_lib.c $(ULAPISRCS) \
+	hal/hal_vtable.c
 $(call TOOBJSDEPS, $(HALLIBSRCS)): EXTRAFLAGS += -fPIC $(ULAPI_CFLAGS)
 USERSRCS += $(HALLIBSRCS)
 ifeq ($(BUILD_SYS),uspace)
