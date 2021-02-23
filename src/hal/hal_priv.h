@@ -306,6 +306,18 @@ typedef struct {
     int comp_id;
 } hal_thread_t;
 
+// represents a HAL vtable object
+typedef struct {
+    int next_ptr;		   // next vtable in linked list
+    int context;                   // 0 for RT, pid for userland
+    int comp_id;                   // optional owning comp reference, 0 if unused
+    int handle;                    // unique ID
+    int refcount;                  // prevents unloading while referenced
+    int version;                   // tags switchs struct version
+    void *vtable;     // pointer to vtable (valid in loading context only)
+    char name[HAL_NAME_LEN + 1];   // vtable name
+} hal_vtable_t;
+
 /* IMPORTANT:  If any of the structures in this file are changed, the
    version code (HAL_VER) must be incremented, to ensure that 
    incompatible utilities, etc, aren't used to manipulate data in
