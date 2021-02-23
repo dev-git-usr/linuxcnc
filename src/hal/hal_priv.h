@@ -440,6 +440,10 @@ extern hal_funct_t *halpr_find_funct_by_owner(hal_comp_t * owner,
 extern hal_pin_t *halpr_find_pin_by_sig(hal_sig_t * sig, hal_pin_t * start);
 
 
+// vtable private API:
+hal_vtable_t *halpr_find_vtable_by_name(const char *name, int version);
+hal_vtable_t *halpr_find_vtable_by_id(int vtable_id);
+
 /** hal_port_alloc allocates a new empty hal_port having a buffer of size bytes. 
     returns a negative value on failure or a hal_port_t which can be used with
     all other hal_port functions.
