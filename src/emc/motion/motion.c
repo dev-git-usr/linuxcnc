@@ -64,6 +64,10 @@ static int num_dio = DEFAULT_DIO;	/* default number of motion synched DIO */
 RTAPI_MP_INT(num_dio, "number of digital inputs/outputs");
 static int num_aio = DEFAULT_AIO;	/* default number of motion synched AIO */
 RTAPI_MP_INT(num_aio, "number of analog inputs/outputs");
+static char *kins = "trivkins";
+RTAPI_MP_STRING(kins, "kinematics vtable name");
+static char *tp = "tp";
+RTAPI_MP_STRING(tp, "tp vtable name");
 
 static int unlock_joints_mask = 0;/* mask to select joints for unlock pins */
 RTAPI_MP_INT(unlock_joints_mask, "mask to select joints for unlock pins");
