@@ -509,6 +509,19 @@ unsigned char hal_get_lock() {
     return hal_data->lock;
 }
 
+/***********************************************************************
+*         Scope exit unlock helper                                     *
+*         see hal_priv.h for usage hints                               *
+************************************************************************/
+void halpr_autorelease_mutex(void *variable)
+{
+    if (hal_data != NULL)
+	rtapi_mutex_give(&(hal_data->mutex));
+    else
+	// programming error
+	rtapi_print_msg(RTAPI_MSG_ERR,"BUG: halpr_autorelease_mutex called before hal_data inited\n");
+}
+
 
 /***********************************************************************
 *                        "PIN" FUNCTIONS                               *
