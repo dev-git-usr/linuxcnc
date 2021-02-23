@@ -195,6 +195,15 @@ RTAPI_BEGIN_DECLS
     extern rtapi_msg_handler_t rtapi_get_msg_handler(void);
 #endif
 
+
+/** 'rtapi_next_handle()' returns a globally unique int ID
+    
+ */
+typedef int (*rtapi_next_handle_t)(void);
+#define rtapi_next_handle()			\
+    rtapi_switch->rtapi_next_handle()
+extern int _rtapi_next_handle(void);
+
 /***********************************************************************
 *                      TIME RELATED FUNCTIONS                          *
 ************************************************************************/
