@@ -2,6 +2,7 @@
 #define HAL_LOGGING_H
 
 #include <rtapi.h>
+#include <string.h>
 
 // checking & logging shorthands
 #define HALERR(fmt, ...)					\
