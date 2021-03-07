@@ -89,6 +89,9 @@ to another.
 #define MOTION_INVALID_ID INT_MIN
 #define MOTION_ID_VALID(x) ((x) != MOTION_INVALID_ID)
 
+#define MOTION_PAUSED_RETURN_MOVE (MOTION_INVALID_ID+10)
+#define MOTION_PAUSED_JOG_MOVE (MOTION_INVALID_ID+11)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -660,7 +663,9 @@ Suggestion: Split this in to an Error and a Status flag register..
 	int depth;		/* motion queue depth */
 	int activeDepth;	/* depth of active blend elements */
 	int queueFull;		/* Flag to indicate the tc queue is full */
-	int paused;		/* Flag to signal motion paused */
+	//tbd-jwp
+	int paused;		/* Flag to signal motion paused  - obsolete with jog-while-paused*/
+	int resuming; 	/* resume operation in progress */
 	int overrideLimitMask;	/* non-zero means one or more limits ignored */
 				/* 1 << (joint-num*2) = ignore neg limit */
 				/* 2 << (joint-num*2) = ignore pos limit */
@@ -683,6 +688,9 @@ Suggestion: Split this in to an Error and a Status flag register..
 	int external_offsets_applied;
 	EmcPose eoffset_pose;
 	int numExtraJoints;
+
+	EmcPose pause_carte_pos;	// Initial Pause Position (IPP) - wheere we switched to the altQueue
+	EmcPose pause_offset_carte_pos;	//IPP + current offset values set by update_offset_pose()
     } emcmot_status_t;
 
 /*********************************

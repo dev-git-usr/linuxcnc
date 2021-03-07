@@ -11,6 +11,7 @@
 #ifndef MOT_PRIV_H
 #define MOT_PRIV_H
 
+#include "tp.h" // because we are referencing TP_STRUCT
 /***********************************************************************
 *                       TYPEDEFS, ENUMS, ETC.                          *
 ************************************************************************/
@@ -210,8 +211,40 @@ typedef struct {
     hal_bit_t   *eoffset_limited; /* ext offsets exceed limit */
 
     hal_float_t *feed_upm; /* feed units per minute*/
+
+    hal_s32_t *pause_state; // mirror pause state in HAL
+
+    //in: when pause_offset_enable becomes active:
+    //record position (fh_carte_pos, motion type) and switch to the alternate motion queue
+    hal_bit_t *pause_offset_enable;
+
+    hal_bit_t *pause_offset_in_range;   // current offset ok with joint limits
+
+    hal_s32_t *paused_at_motion_type;   // see motion_types.h
+    hal_s32_t *current_motion_type;     // see motion_types.h; zero if no motion in progress
+
+    hal_float_t *pause_jog_vel; // this better be within limits
+
+    hal_float_t *pause_offset_x;
+    hal_float_t *pause_offset_y;
+    hal_float_t *pause_offset_z;
+    hal_float_t *pause_offset_a;
+    hal_float_t *pause_offset_b;
+    hal_float_t *pause_offset_c;
+    hal_float_t *pause_offset_u;
+    hal_float_t *pause_offset_v;
+    hal_float_t *pause_offset_w;
+
 } emcmot_hal_data_t;
 
+enum pause_state { PS_RUNNING=0, // aka not paused
+    PS_PAUSING=1,   // looking for the first pausable motion (e.g. not spindle synced)
+    PS_PAUSED=2,    // motion stopped, and ok to unpause
+    PS_PAUSED_IN_OFFSET=3,  // motion stopped but not where we can return to primary queue
+    PS_JOGGING=4,   // Coordinated mode motion in progress
+    PS_RETURNING=5, // executing a return move to return to running
+    PS_PAUSING_FOR_STEP=6,
+    };
 /***********************************************************************
 *                   GLOBAL VARIABLE DECLARATIONS                       *
 ************************************************************************/
@@ -241,6 +274,9 @@ extern struct emcmot_config_t *emcmotConfig;
 extern struct emcmot_debug_t *emcmotDebug;
 extern struct emcmot_error_t *emcmotError;
 
+extern TP_STRUCT *emcmotPrimQueue;
+extern TP_STRUCT *emcmotAltQueue;
+extern TP_STRUCT *emcmotQueue;
 
 // total number of joints (typically set with [KINS]JOINTS)
 #define ALL_JOINTS emcmotConfig->numJoints

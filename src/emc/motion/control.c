@@ -29,6 +29,9 @@
 
 // Mark strings for translation, but defer translation to userspace
 #define _(s) (s)
+
+extern int abort_and_switchback(void); // command.c
+
 static int    ext_offset_teleop_limit = 0;
 static int    ext_offset_coord_limit  = 0;
 static double ext_offset_epsilon;
@@ -38,6 +41,9 @@ KINEMATICS_INVERSE_FLAGS iflags = 0;
 
 /* 1/servo cycle time */
 double servo_freq;
+
+// ignore jog moves during pause if feed too low
+#define MINIMUM_JOG_VELOCITY 0.1 // FIXME: questionable
 
 /*! \todo FIXME - debugging - uncomment the following line to log changes in
    JOINT_FLAG and MOTION_FLAG */
@@ -53,8 +59,6 @@ static unsigned long last_period = 0;
 
 /* servo cycle time */
 static double servo_period;
-
-extern struct emcmot_status_t *emcmotStatus;
 
 // *pcmd_p[0] is shorthand for emcmotStatus->carte_pos_cmd.tran.x
 // *pcmd_p[1] is shorthand for emcmotStatus->carte_pos_cmd.tran.y
@@ -114,7 +118,7 @@ static void check_for_faults(void);
 static void set_operating_mode(void);
 
 /* 'handle_jjogwheels()' reads jogwheels, decides if they should be
-   enabled, and if so, changes the free mode planner's target position
+   enabled, and if so, changes the free mode plaFnner's target position
    when the jogwheel(s) turn.
 */
 static void handle_jjogwheels(void);
@@ -271,6 +275,36 @@ void emcmotController(void *arg, long period)
    prototypes"
 */
 
+#define EQUAL_EMC_POSE(p1,p2) \
+    (((p1).tran.x == (p2).tran.x) && \
+     ((p1).tran.y == (p2).tran.y) && \
+     ((p1).tran.z == (p2).tran.z) && \
+     ((p1).a == (p2).a) &&		 \
+     ((p1).b == (p2).b) &&		 \
+     ((p1).c == (p2).c) &&		 \
+     ((p1).u == (p2).u) &&		 \
+     ((p1).v == (p2).v) &&		 \
+     ((p1).w == (p2).w))
+
+extern int inRange(EmcPose pos, int id, char *move_type); // from command.c
+
+static void update_offset_pose(void)
+{
+    //Apply offset to IPP and store in pause_offset_carte_pos
+    EmcPose *nt = &emcmotStatus->pause_offset_carte_pos;
+    EmcPose *ipp = &emcmotStatus->pause_carte_pos;
+    
+    nt->tran.x = *emcmot_hal_data->pause_offset_x + ipp->tran.x;
+    nt->tran.y = *emcmot_hal_data->pause_offset_y + ipp->tran.y;
+    nt->tran.z = *emcmot_hal_data->pause_offset_z + ipp->tran.z;
+    nt->a = *emcmot_hal_data->pause_offset_a + ipp->a;
+    nt->b = *emcmot_hal_data->pause_offset_b + ipp->b;
+    nt->c = *emcmot_hal_data->pause_offset_c + ipp->c;
+    nt->u = *emcmot_hal_data->pause_offset_u + ipp->u;
+    nt->v = *emcmot_hal_data->pause_offset_v + ipp->v;
+    nt->w = *emcmot_hal_data->pause_offset_w + ipp->w;
+}
+
 static void process_inputs(void)
 {
     int joint_num, spindle_num;
@@ -344,6 +378,198 @@ static void process_inputs(void)
 	if ( enables & *emcmot_hal_data->feed_inhibit ) {
 	    scale = 0;
 	}
+
+    //Pause handling
+    switch (*emcmot_hal_data->pause_state) {
+        case PS_RUNNING:    // nothing to do, not paused
+        break;
+
+        case PS_PAUSING_FOR_STEP:   // short temporary state while executing a step
+            rtapi_print_msg(RTAPI_MSG_DBG, "paused for step\n");
+            //do something - I dont know what (original does something with vtp)
+            tpPause(emcmotQueue);
+            //tbd-jwp
+            *emcmot_hal_data->pause_state = PS_PAUSING;
+        break;
+
+        case PS_PAUSING:   // looking for the first pausable motion (e.g. not spindle-synced)
+            //wait for tp to stop since a spindle-sync motion might be in progress
+            if(tpIsPaused(emcmotQueue)) {
+                rtapi_print_msg(RTAPI_MSG_DBG, "stopped\n");
+
+                // record type of paused motion
+                *emcmot_hal_data->paused_at_motion_type = tpGetMotionType(emcmotQueue);
+
+                //record current carte pos for return move
+                tpGetPos(emcmotQueue, &emcmotStatus->pause_carte_pos);
+
+                //clone parameters for primary queue
+                tpSnapshot(emcmotPrimQueue, emcmotAltQueue);
+
+                //side effect: this also clears emcmotStatus fields
+                // current_vel, requested_vel, spindleSync, distance_to_go
+                tpClear(emcmotAltQueue);
+
+                // start alternate queue where we left off the primary queue
+                tpSetPos(emcmotAltQueue, &emcmotStatus->pause_carte_pos);
+                
+                // switch to alternate motion queue
+                emcmotQueue = emcmotAltQueue;
+
+                //at this point reaty to run motions on alternate queue
+                *emcmot_hal_data->pause_state = PS_PAUSED;
+            }
+        break;
+
+        case PS_PAUSED:     // paused in initial pause position
+            // on alternate queue, all motion stopped
+            rtapi_print_msg(RTAPI_MSG_DBG, "returning = %d\n", emcmotStatus->resuming);
+            // position is the initial pause position, so ok to resume
+            if(emcmotStatus->resuming) {
+                // a resume was requested
+                // switch to primary queue and resume
+                rtapi_print_msg(RTAPI_MSG_DBG, "resuming\n");
+                emcmotStatus->resuming = 0;
+                emcmotDebug->stepping = 0;
+                emcmotQueue = emcmotPrimQueue;
+                tpResume(emcmotQueue);
+                *emcmot_hal_data->pause_state = PS_RUNNING;
+                break;
+            }
+            if(emcmotDebug->stepping) {
+                rtapi_print_msg(RTAPI_MSG_DBG, "step requested - resuming\n");
+                emcmotQueue = emcmotPrimQueue;
+                tpResume(emcmotQueue);
+                *emcmot_hal_data->pause_state = PS_RUNNING;
+                break;
+            }
+            //rtapi_print_msg(RTAPI_MSG_DBG, "PS_PAUSED fallthrough\n");
+        // NOTE: fall through - check for jog and return motions only once
+
+        case PS_PAUSED_IN_OFFSET:   // paused, but in offset to IPP (Initial Pause Position) -> return move needed on resume
+        // process also if PS_PAUSED not resuming
+        // on alternate queue here, all motion stopped
+
+        if (emcmotStatus->resuming || emcmotDebug->stepping) {
+            // resume, or step was requested during PS_PAUSED_IN_OFFSET
+            // execute return move, which should result in state PS_PAUSED
+            rtapi_print_msg(RTAPI_MSG_DBG, "resuming from PAUSED_IN_OFFSET\n");
+
+            // clamp velocity
+            emcmotStatus->current_vel = (*emcmot_hal_data->current_vel) = 
+            (*emcmot_hal_data->pause_jog_vel < emcmotCommand->ini_maxvel) ?
+            *emcmot_hal_data->pause_jog_vel : emcmotCommand->ini_maxvel;
+
+            tpSetId(emcmotQueue, MOTION_PAUSED_RETURN_MOVE);
+            if (-1 == tpAddLine(emcmotQueue,
+                emcmotStatus->pause_carte_pos,
+                TC_LINEAR,
+                emcmotStatus->current_vel,
+                emcmotCommand->ini_maxvel,
+                emcmotCommand->acc,
+                emcmotStatus->enables_new,
+                // FIXME unsure
+                0, // FIXME: don wait for atspeed (?)
+                -1,
+                emcmotCommand->tag)) 
+            {
+                reportError(_("can't add coordnated return move"));
+                emcmotStatus->commandStatus = EMCMOT_COMMAND_BAD_EXEC;
+                abort_and_switchback();
+                SET_MOTION_ERROR_FLAG(1);
+            } else {
+                emcmotStatus->id = MOTION_PAUSED_RETURN_MOVE;
+                SET_MOTION_ERROR_FLAG(0);
+            	rtapi_print_msg(RTAPI_MSG_DBG, "return move to x=%f y=%f z=%f vel=%f added\n",
+				    emcmotStatus->pause_carte_pos.tran.x,emcmotStatus->pause_carte_pos.tran.y,
+				    emcmotStatus->pause_carte_pos.tran.z, emcmotStatus->current_vel);
+            }
+            *emcmot_hal_data->pause_state = PS_RETURNING;
+            break;
+        }
+
+        update_offset_pose();
+        rtapi_print_msg(RTAPI_MSG_DBG, "pose updated\n");
+        *emcmot_hal_data->pause_offset_in_range = inRange(emcmotStatus->pause_offset_carte_pos,0, NULL);
+
+        // store Pose - dont know why...
+        EmcPose cpos;
+        tpGetPos(emcmotQueue, &cpos);
+
+        if (*emcmot_hal_data->pause_offset_enable && 
+            *emcmot_hal_data->pause_offset_in_range &&
+            (!EQUAL_EMC_POSE(emcmotStatus->pause_offset_carte_pos,cpos)) &&
+            (*emcmot_hal_data->pause_jog_vel > MINIMUM_JOG_VELOCITY)) {
+                // not where we should be - insert jog move.
+
+                // clamp velocity
+                emcmotStatus->current_vel = (*emcmot_hal_data->current_vel) = 
+                (*emcmot_hal_data->pause_jog_vel < emcmotCommand->ini_maxvel) ?
+                *emcmot_hal_data->pause_jog_vel : emcmotCommand->ini_maxvel;
+
+                rtapi_print_msg(RTAPI_MSG_DBG, "insert jog move\n");
+                tpSetId(emcmotQueue, MOTION_PAUSED_JOG_MOVE);
+                //add straight Line to Motion planner
+                if(-1 == tpAddLine(emcmotQueue, emcmotStatus->pause_offset_carte_pos, TC_LINEAR,
+                    emcmotStatus->current_vel, emcmotCommand->ini_maxvel,
+                    emcmotCommand->acc, emcmotStatus->enables_new, //???
+                    0, // dont wait for atspeed ???
+                    -1,
+                    emcmotCommand->tag)) //no indexrotary action???
+                {
+                    reportError(_("can't add linear coordinated jog move"));
+                    emcmotStatus->commandStatus = EMCMOT_COMMAND_BAD_EXEC;
+                    abort_and_switchback();
+                    SET_MOTION_ERROR_FLAG(1);
+                } else {
+                    emcmotStatus->id = MOTION_PAUSED_JOG_MOVE;
+                    SET_MOTION_ERROR_FLAG(0);
+                }         
+                *emcmot_hal_data->pause_state = PS_JOGGING;
+        }
+        break;
+
+        case PS_JOGGING:    //currently executing a move due to a valid offset applied
+        if (tpIsDone(emcmotQueue)) { // jog motion stopped
+            // rtapi_print_msg(RTAPI_MSG_DBG, "stopped after jog\n");
+
+            EmcPose cpos;
+            tpGetPos(emcmotQueue, &cpos);
+            if (EQUAL_EMC_POSE(emcmotStatus->pause_carte_pos,cpos)) {
+                // at initial pause position.
+                rtapi_print_msg(RTAPI_MSG_DBG, "jog finished in IPP\n");
+                *emcmot_hal_data->pause_state = PS_PAUSED;
+            } else {
+                rtapi_print_msg(RTAPI_MSG_DBG, "jog finished in Offset\n");
+                *emcmot_hal_data->pause_state = PS_PAUSED_IN_OFFSET;
+            }
+        } else {
+            // jog move still in progress
+            if(!*emcmot_hal_data->pause_offset_enable) {
+                // stop a move in progress
+                tpClear(emcmotQueue);
+                EmcPose here;
+                tpGetPos(emcmotQueue, &here);
+                if (EQUAL_EMC_POSE(emcmotStatus->pause_offset_carte_pos, here)) {
+                    rtapi_print_msg(RTAPI_MSG_DBG, "move stopped, in initial pause position\n");
+                    *emcmot_hal_data->pause_state = PS_PAUSED;
+                } else {
+                    rtapi_print_msg(RTAPI_MSG_DBG, "move stopped in offset\n");
+                    *emcmot_hal_data->pause_state = PS_PAUSED_IN_OFFSET;
+                }
+            }
+        }
+        break;
+
+        case PS_RETURNING:  // short temporary state while executing a step
+            if(tpIsDone(emcmotQueue)) { // return motion stopped
+                rtapi_print_msg(RTAPI_MSG_DBG, "return move complete\n");
+                // since resuming still active, next cycle will switch
+                // back to primary queue and resume
+                *emcmot_hal_data->pause_state = PS_PAUSED;
+            }
+        break;
+    }
     /* save the resulting combined scale factor */
     emcmotStatus->net_feed_scale = scale;
 
@@ -454,7 +680,7 @@ static void process_inputs(void)
 				reportError(_("fault %d during orient in progress"),
 						emcmotStatus->spindle_status[spindle_num].orient_fault);
 				emcmotStatus->commandStatus = EMCMOT_COMMAND_INVALID_COMMAND;
-				tpAbort(&emcmotDebug->coord_tp);
+				abort_and_switchback(); //tpAbort(&emcmotDebug->coord_tp);
 				SET_MOTION_ERROR_FLAG(1);
 			} else if (*(emcmot_hal_data->spindle[spindle_num].spindle_is_oriented)) {
 				*(emcmot_hal_data->spindle[spindle_num].spindle_orient) = 0;
@@ -600,7 +826,7 @@ static void process_probe_inputs(void)
             /* stop! */
             emcmotStatus->probing = 0;
             emcmotStatus->probeTripped = 1;
-            tpAbort(&emcmotDebug->coord_tp);
+            abort_and_switchback(); //tpAbort(&emcmotDebug->coord_tp);
         /* check if the probe hasn't tripped, but the move finished */
         } else if (GET_MOTION_INPOS_FLAG() && tpQueueDepth(&emcmotDebug->coord_tp) == 0) {
             /* we are already stopped, but we need to remember the current 
@@ -626,7 +852,7 @@ static void process_probe_inputs(void)
         if(!GET_MOTION_INPOS_FLAG() && tpQueueDepth(&emcmotDebug->coord_tp) &&
            tpGetExecId(&emcmotDebug->coord_tp) <= 0) {
             // running an MDI command
-            tpAbort(&emcmotDebug->coord_tp);
+            abort_and_switchback(); //tpAbort(&emcmotDebug->coord_tp);
             reportError(_("Probe tripped during non-probe MDI command."));
 	    SET_MOTION_ERROR_FLAG(1);
         }

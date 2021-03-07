@@ -49,11 +49,12 @@ typedef struct emcmot_debug_t {
 	int split;		/* number of split command reads */
 
 	TP_STRUCT coord_tp;	/* coordinated mode planner */
-
+	TP_STRUCT alternate_tp; /* alternate motion queue */
 /* space for trajectory planner queues, plus 10 more for safety */
 /*! \todo FIXME-- default is used; dynamic is not honored */
 	TC_STRUCT queueTcSpace[DEFAULT_TC_QUEUE_SIZE + 10];
-
+	TC_STRUCT altqueueTcSpace[DEFAULT_ALT_TC_QUEUE_SIZE + 10];
+	
 	int enabling;		/* starts up disabled */
 	int coordinating;	/* starts up in free mode */
 	int teleoperating;	/* starts up in free mode */
