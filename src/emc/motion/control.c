@@ -352,15 +352,15 @@ static void process_inputs(void)
         // Actual scale factor is always positive by default
         double adaptive_feed_out = fabs(adaptive_feed_in);
         // Case 1: positive to negative direction change
-        if ( adaptive_feed_in < 0.0 && emcmotDebug->coord_tp.reverse_run == TC_DIR_FORWARD) {
+        if ( adaptive_feed_in < 0.0 && emcmotQueue->reverse_run == TC_DIR_FORWARD) {
             // User commands feed in reverse direction, but we're not running in reverse yet
-            if (tpSetRunDir(&emcmotDebug->coord_tp, TC_DIR_REVERSE) != TP_ERR_OK) {
+            if (tpSetRunDir(emcmotQueue, TC_DIR_REVERSE) != TP_ERR_OK) {
                 // Need to decelerate to a stop first
                 adaptive_feed_out = 0.0;
             }
-        } else if (adaptive_feed_in > 0.0 && emcmotDebug->coord_tp.reverse_run == TC_DIR_REVERSE ) {
+        } else if (adaptive_feed_in > 0.0 && emcmotQueue->reverse_run == TC_DIR_REVERSE ) {
             // User commands feed in forward direction, but we're running in reverse
-            if (tpSetRunDir(&emcmotDebug->coord_tp, TC_DIR_FORWARD) != TP_ERR_OK) {
+            if (tpSetRunDir(emcmotQueue, TC_DIR_FORWARD) != TP_ERR_OK) {
                 // Need to decelerate to a stop first
                 adaptive_feed_out = 0.0;
             }
@@ -491,8 +491,9 @@ static void process_inputs(void)
         update_offset_pose();
         rtapi_print_msg(RTAPI_MSG_DBG, "pose updated\n");
         *emcmot_hal_data->pause_offset_in_range = inRange(emcmotStatus->pause_offset_carte_pos,0, NULL);
-
-        // store Pose - dont know why...
+        rtapi_print_msg(RTAPI_MSG_DBG, "pose in Range = %d\n", *emcmot_hal_data->pause_offset_in_range);
+        
+        // store current Pose - to compare with targetpose
         EmcPose cpos;
         tpGetPos(emcmotQueue, &cpos);
 
@@ -828,7 +829,7 @@ static void process_probe_inputs(void)
             emcmotStatus->probeTripped = 1;
             abort_and_switchback(); //tpAbort(&emcmotDebug->coord_tp);
         /* check if the probe hasn't tripped, but the move finished */
-        } else if (GET_MOTION_INPOS_FLAG() && tpQueueDepth(&emcmotDebug->coord_tp) == 0) {
+        } else if (GET_MOTION_INPOS_FLAG() && tpQueueDepth(emcmotQueue) == 0) {
             /* we are already stopped, but we need to remember the current 
                position here, because it will still be queried */
             emcmotStatus->probedPos = emcmotStatus->carte_pos_fb;
@@ -849,8 +850,8 @@ static void process_probe_inputs(void)
         int i;
         int aborted = 0;
 
-        if(!GET_MOTION_INPOS_FLAG() && tpQueueDepth(&emcmotDebug->coord_tp) &&
-           tpGetExecId(&emcmotDebug->coord_tp) <= 0) {
+        if(!GET_MOTION_INPOS_FLAG() && tpQueueDepth(emcmotQueue) &&
+           tpGetExecId(emcmotQueue) <= 0) {
             // running an MDI command
             abort_and_switchback(); //tpAbort(&emcmotDebug->coord_tp);
             reportError(_("Probe tripped during non-probe MDI command."));
@@ -986,7 +987,7 @@ static void set_operating_mode(void)
     /* check for disabling */
     if (!emcmotDebug->enabling && GET_MOTION_ENABLE_FLAG()) {
 	/* clear out the motion emcmotDebug->coord_tp and interpolators */
-	tpClear(&emcmotDebug->coord_tp);
+	tpClear(emcmotQueue);
 	for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
 	    /* point to joint data */
 	    joint = &joints[joint_num];
@@ -1026,7 +1027,7 @@ static void set_operating_mode(void)
             *(emcmot_hal_data->eoffset_limited) = 0;
         }
         initialize_external_offsets();
-        tpSetPos(&emcmotDebug->coord_tp, &emcmotStatus->carte_pos_cmd);
+        tpSetPos(emcmotQueue, &emcmotStatus->carte_pos_cmd);
 	for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
 	    /* point to joint data */
 	    joint = &joints[joint_num];
@@ -1055,7 +1056,7 @@ static void set_operating_mode(void)
 	if (GET_MOTION_INPOS_FLAG()) {
 
 	    /* update coordinated emcmotDebug->coord_tp position */
-	    tpSetPos(&emcmotDebug->coord_tp, &emcmotStatus->carte_pos_cmd);
+	    tpSetPos(emcmotQueue, &emcmotStatus->carte_pos_cmd);
 	    /* drain the cubics so they'll synch up */
 	    for (joint_num = 0; joint_num < EMCMOT_MAX_JOINTS; joint_num++) {
 		if (joint_num < NO_OF_KINS_JOINTS) {
@@ -1100,7 +1101,7 @@ static void set_operating_mode(void)
 
                 apply_ext_offsets_to_carte_pos(-1); // subtract at coord mode start
 
-		tpSetPos(&emcmotDebug->coord_tp, &emcmotStatus->carte_pos_cmd);
+		tpSetPos(emcmotQueue, &emcmotStatus->carte_pos_cmd);
 		/* drain the cubics so they'll synch up */
 		for (joint_num = 0; joint_num < NO_OF_KINS_JOINTS; joint_num++) {
 		    /* point to joint data */
@@ -1538,9 +1539,9 @@ static void get_pos_cmds(long period)
 	    /* they're empty, pull next point(s) off Cartesian planner */
 	    /* run coordinated trajectory planning cycle */
 
-	    tpRunCycle(&emcmotDebug->coord_tp, period);
+	    tpRunCycle(emcmotQueue, period);
             /* get new commanded traj pos */
-            tpGetPos(&emcmotDebug->coord_tp, &emcmotStatus->carte_pos_cmd);
+            tpGetPos(emcmotQueue, &emcmotStatus->carte_pos_cmd);
 
             if ( update_coord_with_bound() ) {
                 ext_offset_coord_limit = 1;
@@ -1592,7 +1593,7 @@ static void get_pos_cmds(long period)
 	}
 	/* report motion status */
 	SET_MOTION_INPOS_FLAG(0);
-	if (tpIsDone(&emcmotDebug->coord_tp)) {
+	if (tpIsDone(&emcmotQueue)) {
 	    SET_MOTION_INPOS_FLAG(1);
 	}
 	break;
@@ -2365,20 +2366,20 @@ static void update_status(void)
     */
 
     /* motion emcmotDebug->coord_tp status */
-    emcmotStatus->depth = tpQueueDepth(&emcmotDebug->coord_tp);
-    emcmotStatus->activeDepth = tpActiveDepth(&emcmotDebug->coord_tp);
-    emcmotStatus->id = tpGetExecId(&emcmotDebug->coord_tp);
+    emcmotStatus->depth = tpQueueDepth(emcmotQueue);
+    emcmotStatus->activeDepth = tpActiveDepth(emcmotQueue);
+    emcmotStatus->id = tpGetExecId(emcmotQueue);
     //KLUDGE add an API call for this
     emcmotStatus->reverse_run = emcmotDebug->coord_tp.reverse_run;
-    emcmotStatus->tag = tpGetExecTag(&emcmotDebug->coord_tp);
-    emcmotStatus->motionType = tpGetMotionType(&emcmotDebug->coord_tp);
-    emcmotStatus->queueFull = tcqFull(&emcmotDebug->coord_tp.queue);
+    emcmotStatus->tag = tpGetExecTag(emcmotQueue);
+    emcmotStatus->motionType = tpGetMotionType(emcmotQueue);
+    emcmotStatus->queueFull = tcqFull(&emcmotQueue->queue);
 
     /* check to see if we should pause in order to implement
        single emcmotDebug->stepping */
 
     if (emcmotDebug->stepping && emcmotDebug->idForStep != emcmotStatus->id) {
-      tpPause(&emcmotDebug->coord_tp);
+      tpPause(emcmotQueue);
       emcmotDebug->stepping = 0;
       emcmotStatus->paused = 1;
     }
