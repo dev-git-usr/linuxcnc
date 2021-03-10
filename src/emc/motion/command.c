@@ -201,6 +201,8 @@ static int check_axis_constraint(double target, int id, char *move_type,
 
     double eps = 1e-308;
 
+	//rtapi_print_msg(RTAPI_MSG_DBG, "Checking axis %c\n", axis_name);
+
     if (    (fabs(target) < eps)
          && (fabs(axes[axis_no].min_pos_limit) < eps)
          && (fabs(axes[axis_no].max_pos_limit) < eps) ) { return 1;}
@@ -216,7 +218,7 @@ static int check_axis_constraint(double target, int id, char *move_type,
         reportError(_("%s move on line %d would exceed %c's %s limit"),
                     move_type, id, axis_name, _("positive"));
     }
-
+	//rtapi_print_msg(RTAPI_MSG_DBG, "Checking axis %c finished\n", axis_name);
     return in_range;
 }
 
@@ -229,6 +231,8 @@ int inRange(EmcPose pos, int id, char *move_type)
     int joint_num;
     emcmot_joint_t *joint;
     int in_range = 1;
+
+	//rtapi_print_msg(RTAPI_MSG_DBG, "Checking in Range\n");
 
     if(check_axis_constraint(pos.tran.x, id, move_type, 0, 'X') == 0) 
         in_range = 0;
@@ -248,6 +252,8 @@ int inRange(EmcPose pos, int id, char *move_type)
         in_range = 0;
     if(check_axis_constraint(pos.w, id, move_type, 8, 'W') == 0) 
         in_range = 0;
+
+	//rtapi_print_msg(RTAPI_MSG_DBG, "Checked axis constraints\n");
 
     /* Now, check that the endpoint puts the joints within their limits too */
 
@@ -442,6 +448,9 @@ void emcmotCommandHandler(void *arg, long period)
     int abort = 0;
     char* emsg = "";
 
+	//	tbd:jwp
+	rtapi_set_msg_level(5);
+
     /* check for split read */
     if (emcmotCommand->head != emcmotCommand->tail) {
 	emcmotDebug->split++;
@@ -591,7 +600,9 @@ void emcmotCommandHandler(void *arg, long period)
 		SET_JOINT_ERROR_FLAG(joint, 0);
 		SET_JOINT_FAULT_FLAG(joint, 0);
 	    }
-	    emcmotStatus->paused = 0;
+	    //emcmotStatus->pause_state = *(emcmot_hal_data->pause_state) = PS_RUNNING; tbd:jwp
+		*(emcmot_hal_data->pause_state) = PS_RUNNING;
+		emcmotStatus->resuming = 0;
 	    break;
 
 	case EMCMOT_JOINT_ABORT:
@@ -1143,8 +1154,8 @@ void emcmotCommandHandler(void *arg, long period)
 		}
 
 	    /* append it to the emcmotDebug->coord_tp */
-	    tpSetId(&emcmotDebug->coord_tp, emcmotCommand->id);
-	    int res_addline = tpAddLine(&emcmotDebug->coord_tp,
+	    tpSetId(emcmotQueue, emcmotCommand->id);
+	    int res_addline = tpAddLine(emcmotQueue,
 					emcmotCommand->pos,
 					emcmotCommand->motion_type, 
 					emcmotCommand->vel,
@@ -1294,6 +1305,7 @@ void emcmotCommandHandler(void *arg, long period)
 		*(emcmot_hal_data->pause_state) = PS_PAUSING;
 		emcmotStatus->resuming = 0;
 		emcmotDebug->stepping = 0;
+		emcmotStatus->paused = 1;
 		//emcmotStatus->paused = 1;
 	    break;
 
@@ -1301,21 +1313,24 @@ void emcmotCommandHandler(void *arg, long period)
 	    /* run motion in reverse*/
 	    /* only allowed during a pause */
 	    rtapi_print_msg(RTAPI_MSG_DBG, "REVERSE");
-	    tpSetRunDir(&emcmotDebug->coord_tp, TC_DIR_REVERSE);
+	    tpSetRunDir(emcmotQueue, TC_DIR_REVERSE);
 	    break;
 
 	case EMCMOT_FORWARD:
 	    /* run motion in reverse*/
 	    /* only allowed during a pause */
 	    rtapi_print_msg(RTAPI_MSG_DBG, "FORWARD");
-	    tpSetRunDir(&emcmotDebug->coord_tp, TC_DIR_FORWARD);
+	    tpSetRunDir(emcmotQueue, TC_DIR_FORWARD);
 	    break;
 
 	case EMCMOT_RESUME:
 	    /* resume paused motion */
 	    /* can happen at any time */
-	    rtapi_print_msg(RTAPI_MSG_DBG, "RESUME");
+	    rtapi_print_msg(RTAPI_MSG_DBG, "RESUME\n");
+		rtapi_print_msg(RTAPI_MSG_DBG, "resuming = %d\n", emcmotStatus->resuming);
 	    emcmotStatus->resuming = 1;
+        rtapi_print_msg(RTAPI_MSG_DBG, "resuming = %d\n", emcmotStatus->resuming);
+
 		//obsolete with jpw
 		//emcmotDebug->stepping = 0;
 	    //tpResume(&emcmotDebug->coord_tp);
@@ -1325,17 +1340,25 @@ void emcmotCommandHandler(void *arg, long period)
 	case EMCMOT_STEP:
 	    /* resume paused motion until id changes */
 	    /* can happen at any time */
-		//tbd-jwp
-            rtapi_print_msg(RTAPI_MSG_DBG, "STEP");
-            if(emcmotStatus->paused) {
-                emcmotDebug->idForStep = emcmotStatus->id;
-                emcmotDebug->stepping = 1;
-                tpResume(&emcmotDebug->coord_tp);
-                emcmotStatus->paused = 1;
-            } else {
-		reportError(_("MOTION: can't STEP while already executing"));
-	    }
-	    break;
+		//rtapi_print_msg(RTAPI_MSG_DBG, "STEP");
+        
+		switch (*emcmot_hal_data->pause_state) {
+			case PS_JOGGING:
+				reportError(_("MOTION: can't STEP while jogging"));
+				break;
+			case PS_RETURNING:
+				reportError(_("MOTION: can't STEP while in return move"));
+				break;
+			case PS_PAUSED:
+			case PS_PAUSED_IN_OFFSET:
+				emcmotDebug->idForStep = emcmotStatus->id;
+				emcmotDebug->stepping = 1;
+				//defer resume to FSM
+				break;
+			default:
+				reportError(_("MOTION: STEP while in state %d"), *emcmot_hal_data->pause_state); // improve this FIXME
+		}
+		break;
 
 	case EMCMOT_FEED_SCALE:
 	    /* override speed */

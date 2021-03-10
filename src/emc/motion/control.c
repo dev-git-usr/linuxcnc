@@ -423,7 +423,7 @@ static void process_inputs(void)
 
         case PS_PAUSED:     // paused in initial pause position
             // on alternate queue, all motion stopped
-            rtapi_print_msg(RTAPI_MSG_DBG, "returning = %d\n", emcmotStatus->resuming);
+            //rtapi_print_msg(RTAPI_MSG_DBG, "resuming = %d\n", emcmotStatus->resuming);
             // position is the initial pause position, so ok to resume
             if(emcmotStatus->resuming) {
                 // a resume was requested
@@ -434,6 +434,7 @@ static void process_inputs(void)
                 emcmotQueue = emcmotPrimQueue;
                 tpResume(emcmotQueue);
                 *emcmot_hal_data->pause_state = PS_RUNNING;
+                emcmotStatus->paused = 0;
                 break;
             }
             if(emcmotDebug->stepping) {
@@ -489,9 +490,9 @@ static void process_inputs(void)
         }
 
         update_offset_pose();
-        rtapi_print_msg(RTAPI_MSG_DBG, "pose updated\n");
+        //rtapi_print_msg(RTAPI_MSG_DBG, "pose updated\n");
         *emcmot_hal_data->pause_offset_in_range = inRange(emcmotStatus->pause_offset_carte_pos,0, NULL);
-        rtapi_print_msg(RTAPI_MSG_DBG, "pose in Range = %d\n", *emcmot_hal_data->pause_offset_in_range);
+        //rtapi_print_msg(RTAPI_MSG_DBG, "pose in Range = %d\n", *emcmot_hal_data->pause_offset_in_range);
         
         // store current Pose - to compare with targetpose
         EmcPose cpos;
@@ -1593,7 +1594,7 @@ static void get_pos_cmds(long period)
 	}
 	/* report motion status */
 	SET_MOTION_INPOS_FLAG(0);
-	if (tpIsDone(&emcmotQueue)) {
+	if (tpIsDone(emcmotQueue)) {
 	    SET_MOTION_INPOS_FLAG(1);
 	}
 	break;
